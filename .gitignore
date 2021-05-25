@@ -1,2 +1,47 @@
 *.class
 *.log
+*.zip
+*.gz
+*.jpeg
+*.jpg
+*.png
+*.parquet
+*.iml
+*.ipr
+*.iws
+.idea
+out
+*~
+
+# sbt specific
+.settings/
+.cache/
+.history/
+.lib/
+dist/*
+target/
+bin/
+libexec/
+lib_managed/
+src_managed/
+project/boot/
+project/plugins/project/
+project/*-shim.sbt
+project/project/
+project/target/
+.project
+.classpath
+.cache
+*.tsv
+.bloop/
+.metals/
+.vscode/
+
+# Scala-IDE specific
+.scala_dependencies
+.worksheet
+
+# IntelliJ IDEA specific
+**/.idea/
+**/target/
+**/*.iml
