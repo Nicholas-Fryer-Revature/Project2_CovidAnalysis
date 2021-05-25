@@ -45,3 +45,4 @@ project/target/
 **/.idea/
 **/target/
 **/*.iml
+/src/main/scala/directories/
