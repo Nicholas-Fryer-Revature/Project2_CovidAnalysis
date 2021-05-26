@@ -1,14 +1,9 @@
 package com.revature.covidAnalysis.spark
 
 import directories.hdfsLocation
+import org.apache.log4j.{Level, Logger}
+import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import org.apache.spark.sql.functions.{avg, col, count, expr, max, min, udf}
-import org.apache.log4j.Logger
-import org.apache.log4j.Level
-import org.apache.spark.ml.feature.StringIndexer
-import org.apache.log4j.Logger
-import org.apache.log4j.Level
-import org.apache.spark.sql.types.{CharType, DataType, DateType, DoubleType, IntegerType, LongType, StringType, StructField, StructType, TimestampType}
 
 class SparkApp {
   Logger.getLogger("org").setLevel(Level.ERROR)
@@ -44,16 +39,56 @@ class SparkApp {
     val deathsUS = sparkLoadCSV(sparkRun(), "time_series_covid_19_deaths_US.csv")
     val recovered = sparkLoadCSV(sparkRun(), "time_series_covid_19_recovered.csv")
 
-    /*Sample Question: Which Province/State has the most deaths?*/
+    /*Sample Question: Which Province/State has the most/least deaths?*/
     covid19Data.createOrReplaceTempView("covid19data")
     val countryMostDeath = sparkRun.sql(
       """
         | SELECT ObservationDate, `Province/State`, `Country/Region`, Deaths
-        | FROM covid19data order by Deaths desc limit 1
+        | FROM covid19data order by Deaths desc limit 10
     """.stripMargin
     )
     println("Which Province/State has the most deaths?")
     countryMostDeath.show()
+
+    val countryLeastDeath = sparkRun.sql(
+      """
+        | SELECT ObservationDate, `Province/State`, `Country/Region`, Deaths
+        | FROM covid19data where Deaths > 0 order by Deaths limit 10
+    """.stripMargin
+    )
+    println("Which Province/State has the least deaths?")
+    countryLeastDeath.show()
+
+    /*left off*/
+    /*Sample Question: How fast is covid recovery compared to how often covid contraction?*/
+    confirmed.createOrReplaceTempView("covid19confirmed")
+    recovered.createOrReplaceTempView("covid19recovered")
+
+    val worldRecoveredVContracted = sparkRun.sql(
+      """
+        | SELECT c.`Province/State`, c.`Country/Region`
+        | FROM covid19confirmed c LEFT JOIN covid19recovered r ON (c.`Province/State` = r.`Province/State`)
+        | LIMIT 10
+    """.stripMargin
+    )
+    println("?")
+    worldRecoveredVContracted.show()
+
+    /*untouched question*/
+    /*Sample Question: ow did the US recover compared to contraction
+    (time_series_US confirmed vs time_series_covid recovered)*/
+    confirmed.createOrReplaceTempView("covid19confirmed")
+    recovered.createOrReplaceTempView("covid19recovered")
+
+    val USRecoveredVContracted = sparkRun.sql(
+      """
+        | SELECT c.`Province/State`, c.`Country/Region`
+        | FROM covid19confirmed c LEFT JOIN covid19recovered r ON (c.`Province/State` = r.`Province/State`)
+        | LIMIT 10
+    """.stripMargin
+    )
+    println("?")
+    worldRecoveredVContracted.show()
   }
 
   /* sparkLoadCovidData will return a dataframe of
