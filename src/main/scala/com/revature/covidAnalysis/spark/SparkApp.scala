@@ -95,7 +95,7 @@ class SparkApp {
     println("?")
     worldRecoveredVContracted.show()
 
-    //ANALYSIS QUESTION TWO!
+    //ANALYSIS QUESTION THREE!
     println("Death rate of COVID19 in the United States (#ofDeaths/#ofConfirmed)")
     confirmedUSvsDeathsUS(sparkRun(), confirmedUS, deathsUS).show()
   }
