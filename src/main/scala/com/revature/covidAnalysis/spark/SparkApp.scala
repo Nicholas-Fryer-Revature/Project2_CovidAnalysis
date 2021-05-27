@@ -110,9 +110,12 @@ class SparkApp {
     println(totalRecovered.count())
 
     // Active Cases = confirmed - deaths - recovered
-    val currentInfected = totalConfirmed.crossJoin(totalDeaths)
+    /*val currentInfected = totalConfirmed.crossJoin(totalDeaths)
       .select(col("totalConfirmed.Country/Region"),(col("totalConfirmed.Total") - col("totalDeaths.Total")))
-    currentInfected.show
+
+     */
+    //val currentInfected = spark.sql
+    //currentInfected.show
 
 
   }
