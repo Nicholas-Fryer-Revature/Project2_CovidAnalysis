@@ -4,6 +4,7 @@ import directories.hdfsLocation
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.functions.{sum,col}
 
 class SparkApp {
   Logger.getLogger("org").setLevel(Level.ERROR)
@@ -89,6 +90,39 @@ class SparkApp {
     )
     println("?")
     worldRecoveredVContracted.show()
+
+
+
+    //Lastest Date of County's Something
+    println("Total Confirmed Cases")
+    val totalConfirmed = countryTotals(confirmed)
+    totalConfirmed.show
+    println(totalConfirmed.count())
+
+    println("Total Confirmed Deaths")
+    val totalDeaths = countryTotals(deaths)
+    totalDeaths.show
+    println(totalDeaths.count())
+
+    println("Total Confirmed Recoveries")
+    val totalRecovered = countryTotals(recovered)
+    totalRecovered.show
+    println(totalRecovered.count())
+
+    // Active Cases = confirmed - deaths - recovered
+    val currentInfected = totalConfirmed.crossJoin(totalDeaths)
+      .select(col("totalConfirmed.Country/Region"),(col("totalConfirmed.Total") - col("totalDeaths.Total")))
+    currentInfected.show
+
+
+  }
+
+  def countryTotals(df : DataFrame): DataFrame ={
+    val total = df.select(col("Country/Region"),col("5/2/21"))
+      .groupBy("Country/Region")
+      .agg(sum("5/2/21")as("Total"))
+      .orderBy("Country/Region")
+    total
   }
 
   /* sparkLoadCovidData will return a dataframe of
