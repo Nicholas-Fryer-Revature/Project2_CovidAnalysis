@@ -19,7 +19,7 @@ This project will analyze the following:
 
 ## Contributors
 
-> Nicholas Fryer https://github.com/Nicholas-Fryer-Revature
-> Ariel Rubio-Perez https://github.com/RubioRevatureProjects
-> Armand Wilson https://github.com/almondWilde
+* Nicholas Fryer https://github.com/Nicholas-Fryer-Revature
+* Ariel Rubio-Perez https://github.com/RubioRevatureProjects
+* Armand Wilson https://github.com/almondWilde
 
