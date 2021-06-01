@@ -15,7 +15,7 @@ The purpose of this Spark application is to process Covid data.
 This project will analyze the following: 
 * Show Top 10 Most/Least Infected Countries Active Cases
 * How well a region recovers compared to how often covid is contracted (time_series confirmed vs time_series recovered)
-* How did the US recover compared to contraction (time_series_US confirmed vs time_series_covid recovered
+* See the death rates compared to contraction (time_series_US confirmed vs time_series_US deaths)
 
 ## Contributors
 
