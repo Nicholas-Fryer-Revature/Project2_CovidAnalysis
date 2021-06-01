@@ -99,8 +99,8 @@ class SparkApp {
         |OR `Country/Region` like "Uzbekistan"
         |""".stripMargin
     )
-    recoveryAsia.show()
-
+    recoveryAsia.orderBy(desc("Progress_by_April")).orderBy(desc("Progress_by_April")).show()
+    //recoveryAsia.select(col("Country/Region"), col("Progress_by_April")).coalesce(1).write.csv(hdfsLocation.hdfs_path + "output/Asia.csv")
     println("MidEast:")
     val recoveryMidEast = sparkRun.sql(
       """
@@ -118,8 +118,8 @@ class SparkApp {
         |OR `Country/Region` like "Emirates%"
         |""".stripMargin
     )
-    recoveryMidEast.show()
-
+    recoveryMidEast.orderBy(desc("Progress_by_April")).show()
+    //recoveryMidEast.select(col("Country/Region"), col("Progress_by_April")).coalesce(1).write.csv(hdfsLocation.hdfs_path + "output/MidEast.csv")
     println("Europe:")
     val recoveryEurope = sparkRun.sql(
       """
@@ -151,8 +151,8 @@ class SparkApp {
         |OR `Country/Region` like "Ukraine"
         |""".stripMargin
     )
-    recoveryEurope.show()
-
+    recoveryEurope.orderBy(desc("Progress_by_April")).show()
+    //recoveryEurope.select(col("Country/Region"), col("Progress_by_April")).coalesce(1).write.csv(hdfsLocation.hdfs_path + "output/Europe.csv")
     println("Africa:")
     val recoveryAfrica = sparkRun.sql(
       """
@@ -192,8 +192,8 @@ class SparkApp {
         |OR `Country/Region` like "Zimbabwe"
         |""".stripMargin
     )
-    recoveryAfrica.show()
-
+    recoveryAfrica.orderBy(desc("Progress_by_April")).show()
+    //recoveryAfrica.select(col("Country/Region"), col("Progress_by_April")).coalesce(1).write.csv(hdfsLocation.hdfs_path + "output/Africa.csv")
     println("North America:")
     val recoveryNA = sparkRun.sql(
       """
@@ -225,8 +225,8 @@ class SparkApp {
         |OR `Country/Region` like "Virgin"
         |""".stripMargin
     )
-    recoveryNA.show()
-
+    recoveryNA.orderBy(desc("Progress_by_April")).show()
+    //recoveryNA.select(col("Country/Region"), col("Progress_by_April")).coalesce(1).write.csv(hdfsLocation.hdfs_path + "output/NA.csv")
     println("South America:")
     val recoverySA = sparkRun.sql(
       """
@@ -247,11 +247,13 @@ class SparkApp {
         |OR `Country/Region` like "Venezuela"
         |""".stripMargin
     )
-    recoverySA.show()
+    recoverySA.orderBy(desc("Progress_by_April")).show()
+    //recoverySA.select(col("Country/Region"), col("Progress_by_April")).coalesce(1).write.csv(hdfsLocation.hdfs_path + "output/SA.csv")
 
     //ANALYSIS QUESTION THREE!
     println("Death rate of COVID19 in the United States (#ofDeaths/#ofConfirmed)")
     confirmedUSvsDeathsUS(sparkRun(), confirmedUS, deathsUS).show(51)
+
   }
 
   def conformedRecoveredWorld(spark: SparkSession, confirmedWorld: DataFrame, recoveredWorld: DataFrame ): DataFrame = {
