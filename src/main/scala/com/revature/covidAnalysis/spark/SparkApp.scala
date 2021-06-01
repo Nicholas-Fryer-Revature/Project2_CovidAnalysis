@@ -2,11 +2,8 @@ package com.revature.covidAnalysis.spark
 
 import directories.hdfsLocation
 import org.apache.log4j.{Level, Logger}
-import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.functions.{avg, col, desc, expr, monotonically_increasing_id, struct, sum, udf}
-import org.apache.spark.sql.types._
-import org.apache.spark.sql.{DataFrame, SparkSession}
-import org.apache.spark.sql.functions.{sum,col}
+import org.apache.spark.sql.functions.{col, desc, struct, sum, udf}
+import org.apache.spark.sql.types.{DateType, DoubleType, IntegerType, StringType, StructField, StructType}
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 
 import scala.util.Try
@@ -30,8 +27,6 @@ class SparkApp {
     sparkRun.close()
   }
 
-
-
   /*
    * sparkAnalysis will run analytics on Dataframes/Datasets using Spark SQL
    */
@@ -45,25 +40,6 @@ class SparkApp {
     val deathsUS = sparkLoadCSV(sparkRun(), "time_series_covid_19_deaths_US.csv")
     val recovered = sparkLoadCSV(sparkRun(), "time_series_covid_19_recovered.csv")
 
-    /*Sample Question: Which Province/State has the most/least deaths?*/
-    covid19Data.createOrReplaceTempView("covid19data")
-    val countryMostDeath = sparkRun.sql(
-      """
-        | SELECT ObservationDate, `Province/State`, `Country/Region`, Deaths
-        | FROM covid19data order by Deaths desc limit 10
-    """.stripMargin
-    )
-    println("Which Province/State has the most deaths?")
-    countryMostDeath.show()
-
-    val countryLeastDeath = sparkRun.sql(
-      """
-        | SELECT ObservationDate, `Province/State`, `Country/Region`, Deaths
-        | FROM covid19data where Deaths > 0 order by Deaths limit 10
-    """.stripMargin
-    )
-    println("Which Province/State has the least deaths?")
-    countryLeastDeath.show()
 
     /*left off*/
     /*Sample Question: How fast is covid recovery compared to how often covid contraction?*/
@@ -77,8 +53,7 @@ class SparkApp {
         | LIMIT 10
     """.stripMargin
     )
-    println("?")
-    worldRecoveredVContracted.show()
+    //worldRecoveredVContracted.show()
 
     /*untouched question*/
     /*Sample Question: How did the US recover compared to contraction
@@ -93,11 +68,10 @@ class SparkApp {
         | LIMIT 10
     """.stripMargin
     )
-    println("?")
-    worldRecoveredVContracted.show()
+    //worldRecoveredVContracted.show()
 
     //ANALYSIS QUESTION 1
-    //Lastest Date of County's Something
+    //Latest Date of County's Stats
     val totalConfirmed = countryTotals(confirmed)
     val totalDeaths = countryTotals(deaths)
     val totalRecovered = countryTotals(recovered)
@@ -118,17 +92,17 @@ class SparkApp {
         |ORDER BY Infected DESC
         |""".stripMargin)
 
-    val leastInfected = sparkRun()
-
+    //Analysis Question 1A
     println("Top 10 Most Infected Countries Right Now")
-    currentInfected.orderBy(col("Infected").desc).limit(10).show
+    currentInfected.orderBy(col("Infected").desc).limit(10).show()
 
+    //Analysis Question 1B
     println("Top 10 Least Infected Countries Right Now")
-    currentInfected.orderBy(col("Infected").asc).limit(10).show
+    currentInfected.filter("Infected > 1").orderBy(col("Infected").asc).limit(10).show()
 
     //ANALYSIS QUESTION THREE!
     println("Death rate of COVID19 in the United States (#ofDeaths/#ofConfirmed)")
-    confirmedUSvsDeathsUS(sparkRun(), confirmedUS, deathsUS).show()
+    confirmedUSvsDeathsUS(sparkRun(), confirmedUS, deathsUS).show(51)
   }
 
   def countryTotals(df : DataFrame): DataFrame ={
@@ -185,7 +159,9 @@ class SparkApp {
 
     userFile
   }
-
+/* confirmedUSvsDeathsUS will take the SparkSession variable, confirmedUS and deathsUS dataframes to output a
+* dataframe joining the two. This will allow us to see
+*/
   def confirmedUSvsDeathsUS(spark: SparkSession, confirmedUS : DataFrame, deathsUS : DataFrame): DataFrame ={
     import spark.implicits._
 
@@ -220,8 +196,6 @@ class SparkApp {
           ,sum("1/31/21").as("Week13") ,sum("2/28/21").as("Week14")
           ,sum("3/31/21").as("Week15") ,sum("4/30/21").as("Week16")).orderBy($"Province_State")
 
-    confirmedUS3.show
-
     //subtract the previous week from the current week sum
     val confirmedUS4 = confirmedUS3.selectExpr(
       "Province_State",
@@ -242,6 +216,7 @@ class SparkApp {
       "Week15 - Week14 as Week15",
       "Week16 - Week15 as Week16"
     )
+
     //select the state name and last day of each month excluding May 2021
     val deathsUS2 = deathsUS.select(
       col("Province_State"),
@@ -336,9 +311,9 @@ class SparkApp {
       val values = row.toSeq.map(x => Try(x.toString.toDouble).toOption).filter(_.isDefined).map(_.get)
       if(values.nonEmpty) values.sum / values.length else 0.0
     })
-    //create an avg column of the weeks
+    //create an avg column of the weeks, exclude month 1 and  month 2 all null data.
     val percentage3 = percentage2.withColumn("Average", average(
-      struct($"Week1", $"Week2", $"Week3", $"Week4", $"Week5", $"Week6", $"Week8", $"Week9",
+      struct($"Week3", $"Week4", $"Week5", $"Week6", $"Week8", $"Week9",
               $"Week10", $"Week11", $"Week12", $"Week13", $"Week14", $"Week15", $"Week16")
     ))
 
@@ -346,8 +321,6 @@ class SparkApp {
     val percentage4 = percentage3.selectExpr(
       "Province_State AS STATE",
       "CAST(Average as Decimal(4,3)) AS AVG",
-      "CAST(Week1 as Decimal(4,3)) AS JAN20",
-      "CAST(Week2 as Decimal(4,3)) AS FEB20",
       "CAST(Week3 as Decimal(4,3)) AS MAR20",
       "CAST(Week4 as Decimal(4,3)) AS APR20",
       "CAST(Week5 as Decimal(4,3)) AS MAY20",
@@ -362,7 +335,7 @@ class SparkApp {
       "CAST(Week14 as Decimal(4,3)) AS FEB21",
       "CAST(Week15 as Decimal(4,3)) AS MAR21",
       "CAST(Week16 as Decimal(4,3)) AS APR21",
-    )
-    percentage4.orderBy(desc("AVG"))
+    ).orderBy(desc("AVG"))
+    percentage4
   }
 }
