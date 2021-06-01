@@ -40,36 +40,6 @@ class SparkApp {
     val deathsUS = sparkLoadCSV(sparkRun(), "time_series_covid_19_deaths_US.csv")
     val recovered = sparkLoadCSV(sparkRun(), "time_series_covid_19_recovered.csv")
 
-
-    /*left off*/
-    /*Sample Question: How fast is covid recovery compared to how often covid contraction?*/
-    confirmed.createOrReplaceTempView("covid19confirmed")
-    recovered.createOrReplaceTempView("covid19recovered")
-
-    val worldRecoveredVContracted = sparkRun.sql(
-      """
-        | SELECT c.`Province/State`, c.`Country/Region`
-        | FROM covid19confirmed c LEFT JOIN covid19recovered r ON (c.`Province/State` = r.`Province/State`)
-        | LIMIT 10
-    """.stripMargin
-    )
-    //worldRecoveredVContracted.show()
-
-    /*untouched question*/
-    /*Sample Question: How did the US recover compared to contraction
-    (time_series_US confirmed vs time_series_covid recovered)*/
-    confirmedUS.createOrReplaceTempView("covid19confirmedUS")
-    recovered.createOrReplaceTempView("covid19recovered")
-
-    val USRecoveredVContracted = sparkRun.sql(
-      """
-        | SELECT c.`Province/State`, c.`Country/Region`
-        | FROM covid19confirmed c LEFT JOIN covid19recovered r ON (c.`Province/State` = r.`Province/State`)
-        | LIMIT 10
-    """.stripMargin
-    )
-    //worldRecoveredVContracted.show()
-
     //ANALYSIS QUESTION 1
     //Latest Date of County's Stats
     val totalConfirmed = countryTotals(confirmed)
@@ -100,9 +70,358 @@ class SparkApp {
     println("Top 10 Least Infected Countries Right Now")
     currentInfected.filter("Infected > 1").orderBy(col("Infected").asc).limit(10).show()
 
+    //ANALYSIS QUESTION TWO
+    //compare monthly confirmations to recovery; negative values indicate more
+    //recoveries than contractions that month
+    println("How was the world recovery effort by region?")
+    val worldRecoveryStats = conformedRecoveredWorld(sparkRun(), confirmed, recovered )
+    worldRecoveryStats.show()
+
+    worldRecoveryStats.createOrReplaceTempView("worldrecovery")
+    println("Asia:")
+    val recoveryAsia = sparkRun.sql(
+      """
+        |SELECT *
+        |FROM worldrecovery
+        |WHERE `Country/Region` like "China"
+        |OR `Country/Region` like "India"
+        |OR `Country/Region` like "Indonesia"
+        |OR `Country/Region` like "Japan"
+        |OR `Country/Region` like "Nepal"
+        |OR `Country/Region` like "Malaysia"
+        |OR `Country/Region` like "Nepal"
+        |OR `Country/Region` like "Russia"
+        |OR `Country/Region` like "Syria"
+        |OR `Country/Region` like "Singapore"
+        |OR `Country/Region` like "Thailand"
+        |OR `Country/Region` like "Taiwan"
+        |OR `Country/Region` like "Vietnam"
+        |OR `Country/Region` like "Uzbekistan"
+        |""".stripMargin
+    )
+    recoveryAsia.show()
+
+    println("MidEast:")
+    val recoveryMidEast = sparkRun.sql(
+      """
+        |SELECT *
+        |FROM worldrecovery
+        |WHERE `Country/Region` like "Afghanistan"
+        |OR `Country/Region` like "Armenia"
+        |OR `Country/Region` like "Iran"
+        |OR `Country/Region` like "Iraq"
+        |OR `Country/Region` like "Jordan"
+        |OR `Country/Region` like "Kazakhstan"
+        |OR `Country/Region` like "Lebanon"
+        |OR `Country/Region` like "Pakistan"
+        |OR `Country/Region` like "Saudi Arabia"
+        |OR `Country/Region` like "Emirates%"
+        |""".stripMargin
+    )
+    recoveryMidEast.show()
+
+    println("Europe:")
+    val recoveryEurope = sparkRun.sql(
+      """
+        |SELECT *
+        |FROM worldrecovery
+        |WHERE `Country/Region` like "Albania"
+        |OR `Country/Region` like "Spain"
+        |OR `Country/Region` like "Austria"
+        |OR `Country/Region` like "Belgium"
+        |OR `Country/Region` like "Sweden"
+        |OR `Country/Region` like "Croatia"
+        |OR `Country/Region` like "Czechia"
+        |OR `Country/Region` like "Denmark"
+        |OR `Country/Region` like "Estonia"
+        |OR `Country/Region` like "Finland"
+        |OR `Country/Region` like "France"
+        |OR `Country/Region` like "Germany"
+        |OR `Country/Region` like "Greece"
+        |OR `Country/Region` like "Hungary"
+        |OR `Country/Region` like "Iceland"
+        |OR `Country/Region` like "Ireland"
+        |OR `Country/Region` like "Italy"
+        |OR `Country/Region` like "Lithuania"
+        |OR `Country/Region` like "Netherlands"
+        |OR `Country/Region` like "Romania"
+        |OR `Country/Region` like "Portugal"
+        |OR `Country/Region` like "Poland"
+        |OR `Country/Region` like "United Kingdom"
+        |OR `Country/Region` like "Ukraine"
+        |""".stripMargin
+    )
+    recoveryEurope.show()
+
+    println("Africa:")
+    val recoveryAfrica = sparkRun.sql(
+      """
+        |SELECT *
+        |FROM worldrecovery
+        |WHERE `Country/Region` like "Algeria"
+        |OR `Country/Region` like "Botswana"
+        |OR `Country/Region` like "Cameroon"
+        |OR `Country/Region` like "Cape Verde"
+        |OR `Country/Region` like "Chad"
+        |OR `Country/Region` like "Comoros"
+        |OR `Country/Region` like "Congo"
+        |OR `Country/Region` like "Djibouti"
+        |OR `Country/Region` like "Egypt"
+        |OR `Country/Region` like "Ethiopia"
+        |OR `Country/Region` like "Gambia"
+        |OR `Country/Region` like "Kenya"
+        |OR `Country/Region` like "Guinea"
+        |OR `Country/Region` like "Liberia"
+        |OR `Country/Region` like "Libya"
+        |OR `Country/Region` like "Lesotho"
+        |OR `Country/Region` like "Madagascar"
+        |OR `Country/Region` like "Malawi"
+        |OR `Country/Region` like "Mali"
+        |OR `Country/Region` like "Morocco"
+        |OR `Country/Region` like "Namibia"
+        |OR `Country/Region` like "Niger"
+        |OR `Country/Region` like "Nigeria"
+        |OR `Country/Region` like "Rwanda"
+        |OR `Country/Region` like "Senegal"
+        |OR `Country/Region` like "Somalia"
+        |OR `Country/Region` like "South Africa"
+        |OR `Country/Region` like "Tanzania"
+        |OR `Country/Region` like "Tunisia"
+        |OR `Country/Region` like "Uganda"
+        |OR `Country/Region` like "Zambia"
+        |OR `Country/Region` like "Zimbabwe"
+        |""".stripMargin
+    )
+    recoveryAfrica.show()
+
+    println("North America:")
+    val recoveryNA = sparkRun.sql(
+      """
+        |SELECT *
+        |FROM worldrecovery
+        |WHERE `Country/Region` like "Canada"
+        |OR `Country/Region` like "America"
+        |OR `Country/Region` like "Mexico"
+        |OR `Country/Region` like "Belize"
+        |OR `Country/Region` like "Bahamas"
+        |OR `Country/Region` like "Barbados"
+        |OR `Country/Region` like "Bermuda"
+        |OR `Country/Region` like "Virgin"
+        |OR `Country/Region` like "Cayman"
+        |OR `Country/Region` like "Costa Rica"
+        |OR `Country/Region` like "Cuba"
+        |OR `Country/Region` like "Dominican Republic"
+        |OR `Country/Region` like "El Salvador"
+        |OR `Country/Region` like "Guadeloupe"
+        |OR `Country/Region` like "Guatemala"
+        |OR `Country/Region` like "Haiti"
+        |OR `Country/Region` like "Honduras"
+        |OR `Country/Region` like "Honduras"
+        |OR `Country/Region` like "Jamaica"
+        |OR `Country/Region` like "Nicaragua"
+        |OR `Country/Region` like "Panama"
+        |OR `Country/Region` like "Puerto"
+        |OR `Country/Region` like "Saint"
+        |OR `Country/Region` like "Virgin"
+        |""".stripMargin
+    )
+    recoveryNA.show()
+
+    println("South America:")
+    val recoverySA = sparkRun.sql(
+      """
+        |SELECT *
+        |FROM worldrecovery
+        |WHERE `Country/Region` like "Brazil"
+        |OR `Country/Region` like "Argentina"
+        |OR `Country/Region` like "Bolivia"
+        |OR `Country/Region` like "Chile"
+        |OR `Country/Region` like "Columbia"
+        |OR `Country/Region` like "Ecuador"
+        |OR `Country/Region` like "French Guiana"
+        |OR `Country/Region` like "Guyana"
+        |OR `Country/Region` like "Paraguay"
+        |OR `Country/Region` like "Peru"
+        |OR `Country/Region` like "Suriname"
+        |OR `Country/Region` like "Uruguay"
+        |OR `Country/Region` like "Venezuela"
+        |""".stripMargin
+    )
+    recoverySA.show()
+
     //ANALYSIS QUESTION THREE!
     println("Death rate of COVID19 in the United States (#ofDeaths/#ofConfirmed)")
     confirmedUSvsDeathsUS(sparkRun(), confirmedUS, deathsUS).show(51)
+  }
+
+  def conformedRecoveredWorld(spark: SparkSession, confirmedWorld: DataFrame, recoveredWorld: DataFrame ): DataFrame = {
+    //from the raw confirmed cases data,
+    // select only the country name and last day of each month
+    //group by country name so that any country with provinces/states are summed together
+    //second select to isolate the rollover numbers for each month
+    val confirmedWorld2 = confirmedWorld.select(
+      "Country/Region",
+      "1/31/20",
+      "2/29/20",
+      "3/31/20",
+      "4/30/20",
+      "5/31/20",
+      "6/30/20",
+      "7/31/20",
+      "8/31/20",
+      "9/30/20",
+      "10/31/20",
+      "11/30/20",
+      "12/31/20",
+      "1/31/21",
+      "2/28/21",
+      "3/31/21",
+      "4/30/21"
+    ).groupBy("Country/Region").agg(
+      sum("1/31/20").as("Jan20"),
+      sum("2/29/20").as("Feb20"),
+      sum("3/31/20").as("Mar20"),
+      sum("4/30/20").as("Apr20"),
+      sum("5/31/20").as("May20"),
+      sum("6/30/20").as("Jun20"),
+      sum("7/31/20").as("Jul20"),
+      sum("8/31/20").as("Aug20"),
+      sum("9/30/20").as("Sep20"),
+      sum("10/31/20").as("Oct20"),
+      sum("11/30/20").as("Nov20"),
+      sum("12/31/20").as("Dec20"),
+      sum("1/31/21").as("Jan21"),
+      sum("2/28/21").as("Feb21"),
+      sum("3/31/21").as("Mar21"),
+      sum("4/30/21").as("Apr21"),
+    ).selectExpr("`Country/Region`",
+      "Jan20",
+      "Feb20 - Jan20 as Feb20",
+      "Mar20 - Feb20 as Mar20",
+      "Apr20 - Mar20 as Apr20",
+      "May20 - Apr20 as May20",
+      "Jun20 - May20 as Jun20",
+      "Jul20 - Jun20 as Jul20",
+      "Aug20 - Jul20 as Aug20",
+      "Sep20 - Aug20 as Sep20",
+      "Oct20 - Sep20 as Oct20",
+      "Nov20 - Oct20 as Nov20",
+      "Dec20 - Nov20 as Dec20",
+      "Jan21 - Dec20 as Jan21",
+      "Feb21 - Jan21 as Feb21",
+      "Mar21 - Feb21 as Mar21",
+      "Apr21 - Mar21 as Apr21"
+    )
+
+
+    //from the raw recovery data,
+    //select only the country name and last day of each month
+    //group by country name so that any country with provinces/states are summed together
+    //second select to isolate the rollover numbers for each month
+    val recoveredWorld2 = recoveredWorld.select(
+      "Country/Region",
+      "1/31/20",
+      "2/29/20",
+      "3/31/20",
+      "4/30/20",
+      "5/31/20",
+      "6/30/20",
+      "7/31/20",
+      "8/31/20",
+      "9/30/20",
+      "10/31/20",
+      "11/30/20",
+      "12/31/20",
+      "1/31/21",
+      "2/28/21",
+      "3/31/21",
+      "4/30/21"
+    ).groupBy("Country/Region").agg(
+      sum("1/31/20").as("Jan20"),
+      sum("2/29/20").as("Feb20"),
+      sum("3/31/20").as("Mar20"),
+      sum("4/30/20").as("Apr20"),
+      sum("5/31/20").as("May20"),
+      sum("6/30/20").as("Jun20"),
+      sum("7/31/20").as("Jul20"),
+      sum("8/31/20").as("Aug20"),
+      sum("9/30/20").as("Sep20"),
+      sum("10/31/20").as("Oct20"),
+      sum("11/30/20").as("Nov20"),
+      sum("12/31/20").as("Dec20"),
+      sum("1/31/21").as("Jan21"),
+      sum("2/28/21").as("Feb21"),
+      sum("3/31/21").as("Mar21"),
+      sum("4/30/21").as("Apr21"),
+    ).orderBy("Country/Region").selectExpr("`Country/Region`",
+      "Jan20",
+      "Feb20 - Jan20 as Feb20",
+      "Mar20 - Feb20 as Mar20",
+      "Apr20 - Mar20 as Apr20",
+      "May20 - Apr20 as May20",
+      "Jun20 - May20 as Jun20",
+      "Jul20 - Jun20 as Jul20",
+      "Aug20 - Jul20 as Aug20",
+      "Sep20 - Aug20 as Sep20",
+      "Oct20 - Sep20 as Oct20",
+      "Nov20 - Oct20 as Nov20",
+      "Dec20 - Nov20 as Dec20",
+      "Jan21 - Dec20 as Jan21",
+      "Feb21 - Jan21 as Feb21",
+      "Mar21 - Feb21 as Mar21",
+      "Apr21 - Mar21 as Apr21"
+    )
+
+    //create views for confirmed and recovered cases to query on
+    confirmedWorld2.createOrReplaceTempView("confirmed")
+    recoveredWorld2.createOrReplaceTempView("recovered")
+    //join both tables on Country/Region, subtract the data from corresponding columns
+    //positive values indicate more confirmations than recoveries that month
+    //negative values indicate more recoveries than confirmations that month
+    val progress = spark.sql(
+      """
+        | SELECT c.`Country/Region`,
+        | c.Jan20 - r.Jan20 as Jan20_rc,
+        | c.Feb20 - r.Feb20 as Feb20_rc,
+        | c.Mar20 - r.Mar20 as Mar20_rc,
+        | c.Apr20 - r.Apr20 as Apr20_rc,
+        | c.May20 - r.May20 as May20_rc,
+        | c.Jun20 - r.Jun20 as Jun20_rc,
+        | c.Jul20 - r.Jul20 as Jul20_rc,
+        | c.Aug20 - r.Aug20 as Aug20_rc,
+        | c.Sep20 - r.Sep20 as Sep20_rc,
+        | c.Oct20 - r.Oct20 as Oct20_rc,
+        | c.Nov20 - r.Nov20 as Nov20_rc,
+        | c.Dec20 - r.Dec20 as Dec20_rc,
+        | c.Jan21 - r.Jan21 as Jan21_rc,
+        | c.Feb21 - r.Feb21 as Feb21_rc,
+        | c.Mar21 - r.Mar21 as Mar21_rc,
+        | c.Apr21 - r.Apr21 as Apr21_rc
+        | FROM confirmed c
+        | JOIN recovered r WHERE c.`Country/Region` == r.`Country/Region`
+        | ORDER BY `Country/Region`
+        |""".stripMargin
+    ).withColumn("Progress_by_April",
+      col("Jan20_rc") +
+        col("Feb20_rc") +
+        col("Mar20_rc") +
+        col("Apr20_rc") +
+        col("May20_rc") +
+        col("Jun20_rc") +
+        col("Jul20_rc") +
+        col("Aug20_rc") +
+        col("Sep20_rc") +
+        col("Oct20_rc") +
+        col("Nov20_rc") +
+        col("Dec20_rc") +
+        col("Jan21_rc") +
+        col("Feb21_rc") +
+        col("Mar21_rc") +
+        col("Apr21_rc")
+    )
+
+    //    progress.orderBy("Progress_by_April")
+    progress
   }
 
   def countryTotals(df : DataFrame): DataFrame ={

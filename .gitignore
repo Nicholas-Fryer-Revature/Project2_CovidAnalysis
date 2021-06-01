@@ -46,3 +46,4 @@ project/target/
 **/target/
 **/*.iml
 /src/main/scala/directories
+*.sbt
