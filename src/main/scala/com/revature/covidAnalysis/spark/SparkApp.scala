@@ -2,8 +2,8 @@ package com.revature.covidAnalysis.spark
 
 import directories.hdfsLocation
 import org.apache.log4j.{Level, Logger}
-import org.apache.spark.sql.functions.{col, desc, struct, sum, udf}
-import org.apache.spark.sql.types.{DateType, DoubleType, IntegerType, StringType, StructField, StructType}
+import org.apache.spark.sql.functions._
+import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 
 import scala.util.Try
@@ -75,7 +75,9 @@ class SparkApp {
     //recoveries than contractions that month
     println("How was the world recovery effort by region?")
     val worldRecoveryStats = conformedRecoveredWorld(sparkRun(), confirmed, recovered )
-    worldRecoveryStats.show()
+    worldRecoveryStats.write.csv(hdfsLocation.hdfs_path + "output/confirmedVsDeaths.csv")
+
+//      .show()
 
     worldRecoveryStats.createOrReplaceTempView("worldrecovery")
     println("Asia:")
@@ -99,7 +101,8 @@ class SparkApp {
         |OR `Country/Region` like "Uzbekistan"
         |""".stripMargin
     )
-    recoveryAsia.show()
+    recoveryAsia.write.csv(hdfsLocation.hdfs_path + "output/confirmedVsDeaths.csv")
+//      .show()
 
     println("MidEast:")
     val recoveryMidEast = sparkRun.sql(
@@ -118,7 +121,8 @@ class SparkApp {
         |OR `Country/Region` like "Emirates%"
         |""".stripMargin
     )
-    recoveryMidEast.show()
+    recoveryMidEast.write.csv(hdfsLocation.hdfs_path + "output/confirmedVsDeaths.csv")
+//      .show()
 
     println("Europe:")
     val recoveryEurope = sparkRun.sql(
@@ -151,7 +155,8 @@ class SparkApp {
         |OR `Country/Region` like "Ukraine"
         |""".stripMargin
     )
-    recoveryEurope.show()
+    recoveryEurope.write.csv(hdfsLocation.hdfs_path + "output/confirmedVsDeaths.csv")
+//      .show()
 
     println("Africa:")
     val recoveryAfrica = sparkRun.sql(
@@ -192,7 +197,8 @@ class SparkApp {
         |OR `Country/Region` like "Zimbabwe"
         |""".stripMargin
     )
-    recoveryAfrica.show()
+    recoveryAfrica.write.csv(hdfsLocation.hdfs_path + "output/confirmedVsDeaths.csv")
+//      .show()
 
     println("North America:")
     val recoveryNA = sparkRun.sql(
@@ -225,7 +231,8 @@ class SparkApp {
         |OR `Country/Region` like "Virgin"
         |""".stripMargin
     )
-    recoveryNA.show()
+    recoveryNA.write.csv(hdfsLocation.hdfs_path + "output/confirmedVsDeaths.csv")
+//      .show()
 
     println("South America:")
     val recoverySA = sparkRun.sql(
@@ -247,7 +254,8 @@ class SparkApp {
         |OR `Country/Region` like "Venezuela"
         |""".stripMargin
     )
-    recoverySA.show()
+    recoverySA.write.csv(hdfsLocation.hdfs_path + "output/confirmedVsDeaths.csv")
+//      .show()
 
     //ANALYSIS QUESTION THREE!
     println("Death rate of COVID19 in the United States (#ofDeaths/#ofConfirmed)")
